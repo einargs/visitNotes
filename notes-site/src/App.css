@@ -33,6 +33,19 @@
   }
 }
 
+.holding {
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.transcript {
+
+}
+
+.summary {
+
+}
+
 .card {
   padding: 2em;
 }
