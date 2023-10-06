@@ -5,11 +5,15 @@ This is just an outline of how it'll work with only the transcript.
 - Client sends dummy packet that will eventually be audio.
 - Server replies with a chunk of dialogue and an updated summary.
 
-## Incorporating Audio
+## TODO
+- [ ] Don't synchronously read in the whole file
+- [ ] Allow having multiple clients.
+
+# Incorporating Audio
 - We'll have to research how to properly send audio information. Do websockets
   work or do we need WebRTC.
 
-## Queries/Pie in the Sky
+# Queries/Pie in the Sky
 - We can enable the user to request the AI to make changes to the summary. "Hey,
   the patient said it started two days ago, not one day ago." etc.
 - We can enable the user to perform natural language queries of both patient
