@@ -29,4 +29,3 @@ This is just an outline of how it'll work with only the transcript.
 - We can highlight important information in the transcript.
   - Clicking on it could bring up a context menu to include it in the summary or
     find related medical codes?
-
