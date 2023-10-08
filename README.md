@@ -1,3 +1,11 @@
+# Frontend
+The source for the frontend website is in `frontend-site`.
+
+You'll need Node.js 18+ installed. If your package manager doesn't have it,
+you can download it from (here)[https://nodejs.org/en/download/current].
+We're using pnpm. To install it, go
+(here)[https://pnpm.io/installation#using-npm].
+
 # Frontend Outline (Transcript Only)
 This is just an outline of how it'll work with only the transcript.
 
