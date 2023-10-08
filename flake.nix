@@ -16,6 +16,7 @@
         python311Packages.virtualenv
         python311
         nodejs_20
+        nodePackages.pnpm
       ];
        src = [
          ./flake.nix
