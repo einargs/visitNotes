@@ -6,6 +6,12 @@ you can download it from (here)[https://nodejs.org/en/download/current].
 We're using pnpm. To install it, go
 (here)[https://pnpm.io/installation#using-npm].
 
+# Backend
+We're going to use Quart (basically Flask but for asyncio), python-socketio,
+which has better support for sessions and also works with asyncio. To run it,
+we're using hypercorn. As such, just run `hypercorn app:asgi`. See hypercorn
+docs for more.
+
 # Frontend Outline (Transcript Only)
 This is just an outline of how it'll work with only the transcript.
 
