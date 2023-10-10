@@ -1,4 +1,5 @@
 from flask import Flask
+import wave
 from flask_socketio import SocketIO, send, emit
 
 app = Flask("notes")
@@ -17,10 +18,17 @@ audio_file = None
 
 @socketio.on('audio-chunk')
 def handle_audio(data):
+  # `data` is a binary sequence encoding an entire audio file, not just a chunk
+  # of one.
   global audio_file
   if audio_file is None:
-    audio_file = open('./streamed.wav', 'wb')
-  audio_file.write(data)
+    audio_file = wave.open('./streamed.wav', 'wb')
+    # I have no idea what the right settings are and I'm starting to think
+    # part of the problem is how wav wants the channels interleaved.
+    audio_file.setnchannels(2)
+    audio_file.setsampwidth(4)
+    audio_file.setframerate(48000)
+  audio_file.writeframes(data)
 
 @socketio.on('audio-end')
 def handle_audio_end(data):
@@ -38,7 +46,6 @@ def handle_reset():
   emit('transcript-update', {
     'transcript':transcript[0:lines_sent*5],
     'summary': summary }, json=True)
-  
 
 @socketio.on('send-transcript')
 def handle_transcript():
