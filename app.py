@@ -1,10 +1,15 @@
-from flask import Flask
+from quart import Quart
 import wave
-from flask_socketio import SocketIO, send, emit
+import socketio
+import hypercorn
+import asyncio
+import aiofiles
 
-app = Flask("notes")
+# If we end up needing quart, this is how you integerate the two:
+# https://python-socketio.readthedocs.io/en/latest/api.html#socketio.ASGIApp
 
-socketio = SocketIO(app, cors_allowed_origins='*')
+app = Quart(__name__)
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 
 transcript_file = open('./data/clean_transcripts/CAR0001.txt')
 transcript = list(filter(lambda str: str != "", transcript_file.read().splitlines()))
@@ -12,48 +17,44 @@ transcript_file.close()
 
 summary = "TEST SUMMARY"
 
-lines_sent = 0
-
-audio_file = None
-
-@socketio.on('audio-chunk')
-def handle_audio(data):
+@sio.on('audio-chunk')
+async def handle_audio(sid, data):
   # `data` is a binary sequence encoding an entire audio file, not just a chunk
   # of one.
-  global audio_file
-  if audio_file is None:
-    audio_file = wave.open('./streamed.wav', 'wb')
-    # I have no idea what the right settings are and I'm starting to think
-    # part of the problem is how wav wants the channels interleaved.
-    audio_file.setnchannels(2)
-    audio_file.setsampwidth(4)
-    audio_file.setframerate(48000)
-  audio_file.writeframes(data)
+  async with sio.session(sid) as session:
+    if 'audio_file' not in session:
+      # We're writing the raw PCM.
+      audio_file = await aiofiles.open('./streamed.wav', 'wb')
+      # I have no idea what the right settings are and I'm starting to think
+      # part of the problem is how wav wants the channels interleaved.
+      session['audio_file'] = audio_file
+    await session['audio_file'].write(data)
 
-@socketio.on('audio-end')
-def handle_audio_end(data):
-  global audio_file
-  if audio_file is not None:
-    audio_file.close()
-    audio_file = None
-  with open('./at-end.wav', 'wb') as file:
-    file.write(data)
+@sio.on('audio-end')
+async def handle_audio_end(sid, data):
+  async with sio.session(sid) as session:
+    if 'audio_file' in session:
+      session['audio_file'].close()
+      del session['audio_file']
+  async with aiofiles.open('./at-end.wav', 'wb') as file:
+    await file.write(data)
 
-@socketio.on('reset-transcript')
-def handle_reset():
-  global lines_sent
-  lines_sent = 1
-  emit('transcript-update', {
-    'transcript':transcript[0:lines_sent*5],
-    'summary': summary }, json=True)
+@sio.on('reset-transcript')
+async def handle_reset(sid):
+  async with sio.session(sid) as session:
+    session['lines_sent'] = 1
+    await sio.emit('transcript-update', data={
+      'transcript':transcript[0:session['lines_sent']*5],
+      'summary': summary }, to=sid)
 
-@socketio.on('send-transcript')
-def handle_transcript():
-  global lines_sent
-  lines_sent += 1
-  emit('transcript-update', {
-    'transcript':transcript[0:lines_sent*5],
-    'summary': summary }, json=True)
+@sio.on('send-transcript')
+async def handle_transcript(sid):
+  async with sio.session(sid) as session:
+    if 'lines_sent' not in session:
+      session['lines_sent'] = 0
+    session['lines_sent'] += 1
+    await sio.emit('transcript-update', data={
+      'transcript':transcript[0:session['lines_sent']*5],
+      'summary': summary }, to=sid)
 
-if __name__ == '__main__':
-  socketio.run(app)
+asgi = socketio.ASGIApp(sio, other_asgi_app=app)
