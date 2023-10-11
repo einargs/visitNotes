@@ -25,26 +25,27 @@ docs = loader.load()
 # store in ChromaDB
 # docquery = Chrome.from_documents(text, embeddings)
 
-# summarize
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-16k")
-chain = load_summarize_chain(llm, chain_type="stuff")
-
-print(chain.run(docs))
-
-# Define prompt
-# prompt_template = """Write a concise summary of the following:
-# "{text}"
-# CONCISE SUMMARY:"""
-# prompt = PromptTemplate.from_template(prompt_template)
-#
-# # Define LLM chain
+# summarize option 1
 # llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-16k")
-# llm_chain = LLMChain(llm=llm, prompt=prompt)
+# chain = load_summarize_chain(llm, chain_type="stuff")
 #
-# # Define StuffDocumentsChain
-# stuff_chain = StuffDocumentsChain(
-#     llm_chain=llm_chain, document_variable_name="text"
-# )
-#
-# docs = loader.load()
-# print(stuff_chain.run(docs))
+# print(chain.run(docs))
+
+# summarize option 2
+# Define prompt
+prompt_template = """Write a concise summary of the following:
+"{text}"
+CONCISE SUMMARY:"""
+prompt = PromptTemplate.from_template(prompt_template)
+
+# Define LLM chain
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-16k")
+llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+# Define StuffDocumentsChain
+stuff_chain = StuffDocumentsChain(
+    llm_chain=llm_chain, document_variable_name="text"
+)
+
+docs = loader.load()
+print(stuff_chain.run(docs))
