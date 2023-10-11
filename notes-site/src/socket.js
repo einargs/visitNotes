@@ -6,6 +6,30 @@ const URL = "localhost:5000";
 
 export const socket = io(URL);
 
+// Quick and dirty function to downsample the 48000 sample rate provided
+// by the chromium I'm using to 16000.
+async function downSample(blob) {
+  const buffer = await blob.arrayBuffer()
+  // if we have an odd number of bytes in the buffer we need to cut off the
+  // last one.
+  const cutoff = Math.floor(buffer.byteLength / 2)
+  console.log("buffer len", buffer.byteLength, "cutoff", cutoff)
+  // const cutoff = buffer.byteLength % 2 == 0 ? buffer.byteLength : buffer.byteLength - 1
+  const source = new Int16Array(buffer, 0, cutoff)
+  const downSampleRate = 48000/16000;
+  const destSize = Math.floor(source.byteLength/downSampleRate)
+  console.log("length", source.length, source.byteLength, "dest", destSize)
+  const dest = new Int16Array(16000)
+
+  for (let i=0;i<dest.length;i++) {
+    dest[i] = Math.floor((source[i*downSampleRate]
+        + source[i*downSampleRate+1]
+        + source[i*downSampleRate+2]
+        + source[i*downSampleRate+3])/4)
+  }
+  return dest
+}
+
 export function useAudio() {
   const [isRecording, setIsRecording] = useState(false)
   useEffect(() => {
@@ -13,24 +37,30 @@ export function useAudio() {
       const chunks = []
       let recorder = null
       navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          sampleSize: 16,
+          channelCount: 1,
+          sampleRate: 8000,
+        },
       }).then(stream => {
-        console.log(stream.getAudioTracks())
+        console.log(stream.getAudioTracks()[0].getSettings())
         // TODO: look at multiple channels and merging them if needed?
         // Also, if necessary, I could probably do this in an AudioWorklet,
         // but I don't need to.
         recorder = new MediaRecorder(stream, {
           //audioBitsPerSecond: 
-          mimeType: "audio/ogg; codec=opus"
+          // mimeType: "audio/ogg; codec=opus"
           // mimeType: "audio/wave"
         })
         console.log(recorder.mimeType, recorder)
 
-        recorder.ondataavailable = (e) => {
-          chunks.push(e.data)
+        recorder.ondataavailable = async (e) => {
+          const sample = await downSample(e.data)
+          chunks.push(sample)
+
           // we send the raw info over
           // we could send `recorder.audioBitsPerSecond`? Not sure if needed.
-          socket.emit('audio-chunk', e.data)
+          socket.emit('audio-chunk', sample)
         }
 
         recorder.onstop = () => {

@@ -24,17 +24,23 @@ async def handle_audio(sid, data):
   async with sio.session(sid) as session:
     if 'audio_file' not in session:
       # We're writing the raw PCM.
-      audio_file = await aiofiles.open('./streamed.wav', 'wb')
+      audio_file = wave.open('./streamed.wav', 'wb')
+      audio_file.setnchannels(1)
+      audio_file.setsampwidth(2)
+      audio_file.setframerate(16000)
+      # audio_file = await aiofiles.open('./streamed.wav', 'wb')
       # I have no idea what the right settings are and I'm starting to think
       # part of the problem is how wav wants the channels interleaved.
       session['audio_file'] = audio_file
-    await session['audio_file'].write(data)
+    # await session['audio_file'].write(data)
+    session['audio_file'].writeframes(data)
 
 @sio.on('audio-end')
 async def handle_audio_end(sid, data):
   async with sio.session(sid) as session:
     if 'audio_file' in session:
       session['audio_file'].close()
+      # await session['audio_file'].close()
       del session['audio_file']
   async with aiofiles.open('./at-end.wav', 'wb') as file:
     await file.write(data)

@@ -3,3 +3,7 @@
 .idea
 .DS_Store
 __pycache__
+# Simple bash file holding the secret key variables
+secret_keys
+# Test recording files
+*.wav
