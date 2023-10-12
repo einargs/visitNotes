@@ -37,12 +37,20 @@ def start_audio_recognizer():
   audio_config = speech.audio.AudioConfig(stream=push_stream)
   recognizer = speech.SpeechRecognizer(
     speech_config=speech_config, audio_config=audio_config)
+  # We start the speech recognizer here.
   recognizer.start_continuous_recognition()
+  # I'm not sure why we need to do this when it's already having a session
+  # stopped or canceled event, but the docs say to do so.
   def stop_cb():
     nonlocal recognizer
     end_recognition(recognizer)
+
+  # Recognizing is basically each word in a sentence as it's figuring out what
+  # someone is saying.
   def recognizing_text(event):
     print("recognizing: {}".format(event.result.text))
+  # Recognized is when it's settled down exactly what someone is saying and can
+  # format it all. This is what we'll be adding to the transcript logs.
   def recognized_text(event):
     print("recognized: {}".format(event.result.text))
   recognizer.recognizing.connect(recognizing_text)
@@ -65,6 +73,7 @@ def cleanup_recording_session(session):
   if 'speech_stream' in session:
     del session['speech_stream']
 
+# Here we clean up resources and file handlers if we disconnect early.
 @sio.on('disconnect')
 async def handle_disconnect(sid):
   async with sio.session(sid) as session:
@@ -76,15 +85,17 @@ async def handle_audio(sid, data):
   # of one.
   async with sio.session(sid) as session:
     if 'audio_file' not in session:
-      # Our first message
-      # We're writing the raw PCM.
+      # This is the first audio-chunk event then.
+      # We're writing the raw PCM as a wav file to make sure that it has all of
+      # the right settings. If they're wrong, we get awful noise when we try to
+      # play this file.
       audio_file = wave.open('./streamed.wav', 'wb')
       audio_file.setnchannels(1)
       audio_file.setsampwidth(2)
       audio_file.setframerate(16000)
+      # This commented out part is for writing the pcm without wav headers.
+      # It writes the file asynchronously.
       #audio_file = await aiofiles.open('./streamed.wav', 'wb')
-      # I have no idea what the right settings are and I'm starting to think
-      # part of the problem is how wav wants the channels interleaved.
       session['audio_file'] = audio_file
       stream, recognizer = start_audio_recognizer()
       session['speech_stream'] = stream
