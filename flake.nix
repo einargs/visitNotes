@@ -6,25 +6,30 @@
   };
   nixConfig = {
     bash-prompt = ''\[\033[1;32m\][\[\e]0;\u@\h: \w\a\]dev-shell:\w]\$\[\033[0m\] '';
-    permittedInsecurePackages = [
-      "openssl-1.1.1v"
-    ];
   };
 
   outputs = { self, nixpkgs }: 
   let system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        config.permittedInsecurePackages = [
+          "openssl-1.1.1v"
+        ];
+      };
+      # We have to do this
+      # pkgs = nixpkgs.legacyPackages.${system};
   in {
     devShells.x86_64-linux.default = (pkgs.buildFHSUserEnv {
       name = "audio";
       targetPkgs = pkgs: with pkgs; [
+        vlc
+        # alsa-lib
         chromium
         python311Packages.virtualenv
         python311
         nodejs_20
         nodePackages.pnpm
         gcc
-        alsa-lib
         openssl_1_1
         # libuuid
         autoconf

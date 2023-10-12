@@ -28,11 +28,11 @@ async def handle_audio(sid, data):
       audio_file.setnchannels(1)
       audio_file.setsampwidth(2)
       audio_file.setframerate(16000)
-      # audio_file = await aiofiles.open('./streamed.wav', 'wb')
+      #audio_file = await aiofiles.open('./streamed.wav', 'wb')
       # I have no idea what the right settings are and I'm starting to think
       # part of the problem is how wav wants the channels interleaved.
       session['audio_file'] = audio_file
-    # await session['audio_file'].write(data)
+    #await session['audio_file'].write(data)
     session['audio_file'].writeframes(data)
 
 @sio.on('audio-end')
