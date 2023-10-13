@@ -23,7 +23,18 @@ transcript_file.close()
 
 summary = "TEST SUMMARY"
 
-def start_audio_recognizer():
+async def send_recognized_event(sid, msg):
+  """
+  Informs the client that text has been recognized.
+  """
+  async with sio.session(sid) as session:
+    session['transcript'].append(msg)
+    await sio.emit('transcript-update', to=sid, data={
+      'transcript':session['transcript'],
+      'summary': "PLACEHOLDER"
+    })
+
+def start_audio_recognizer(sid):
   global speech_key
   global speech_region
   speech_config = speech.SpeechConfig(speech_key, speech_region)
@@ -38,7 +49,7 @@ def start_audio_recognizer():
   recognizer = speech.SpeechRecognizer(
     speech_config=speech_config, audio_config=audio_config)
   # We start the speech recognizer here.
-  recognizer.start_continuous_recognition()
+  recognizer.start_continuous_recognition_async()
   # I'm not sure why we need to do this when it's already having a session
   # stopped or canceled event, but the docs say to do so.
   def stop_cb():
@@ -52,7 +63,17 @@ def start_audio_recognizer():
   # Recognized is when it's settled down exactly what someone is saying and can
   # format it all. This is what we'll be adding to the transcript logs.
   def recognized_text(event):
+    nonlocal sid
     print("recognized: {}".format(event.result.text))
+    try:
+      # Basically I think these callbacks are running in a different thread that
+      # thus doesn't have an event loop like the main thread where the socketio
+      # event loop is happening.
+      asyncio.run(send_recognized_event(sid, event.result.text))
+    except Exception as err:
+      print(err)
+    # t = sio.start_background_task(send_recognized_event, sid, event.result.text)
+  print(type(recognizer.recognizing))
   recognizer.recognizing.connect(recognizing_text)
   recognizer.recognized.connect(recognized_text)
   recognizer.session_stopped.connect(stop_cb)
@@ -73,9 +94,16 @@ def cleanup_recording_session(session):
   if 'speech_stream' in session:
     del session['speech_stream']
 
-# Here we clean up resources and file handlers if we disconnect early.
+@sio.on('connect')
+async def handle_connect(sid, arg):
+  async with sio.session(sid) as session:
+    session['transcript'] = []
+
 @sio.on('disconnect')
 async def handle_disconnect(sid):
+  """
+  Here we clean up resources and file handlers if we disconnect early.
+  """
   async with sio.session(sid) as session:
     cleanup_recording_session(session)
 
@@ -97,7 +125,7 @@ async def handle_audio(sid, data):
       # It writes the file asynchronously.
       #audio_file = await aiofiles.open('./streamed.wav', 'wb')
       session['audio_file'] = audio_file
-      stream, recognizer = start_audio_recognizer()
+      stream, recognizer = start_audio_recognizer(sid)
       session['speech_stream'] = stream
       session['speech_recognizer'] = recognizer
     #await session['audio_file'].write(data)
