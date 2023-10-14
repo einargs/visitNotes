@@ -7,6 +7,8 @@ import aiofiles
 import os
 import azure.cognitiveservices.speech as speech
 import azure.cognitiveservices.speech.audio as saudio
+from summarize import highlight_text, summarize_text
+from langchain.docstore.document import Document
 
 # If we end up needing quart, this is how you integerate the two:
 # https://python-socketio.readthedocs.io/en/latest/api.html#socketio.ASGIApp
@@ -23,15 +25,22 @@ transcript_file.close()
 
 summary = "TEST SUMMARY"
 
+async def get_summary(transcript):
+  text = "\n\n".join(transcript)
+  doc = Document(page_content=text, metadata={"source":"local"})
+  symptoms = await highlight_text(doc)
+  return await summarize_text([doc], symptoms)
+
 async def send_recognized_event(sid, msg):
   """
   Informs the client that text has been recognized.
   """
   async with sio.session(sid) as session:
     session['transcript'].append(msg)
+    summary = await get_summary(session['transcript'])
     await sio.emit('transcript-update', to=sid, data={
       'transcript':session['transcript'],
-      'summary': "PLACEHOLDER"
+      'summary': summary
     })
 
 def start_audio_recognizer(sid):

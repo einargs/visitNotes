@@ -3,13 +3,14 @@ from langchain.document_loaders import TextLoader
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
+import asyncio
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 
 from langchain.chains import create_extraction_chain
 
 load_dotenv()
 
-def highlight_text(input_text):
+async def highlight_text(input_text):
     # extraction chain requires a schema to extract desired entities, so...
     schema = {
         "properties": {
@@ -20,9 +21,11 @@ def highlight_text(input_text):
 
     llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
     chain = create_extraction_chain(schema, llm)
+    print("before running highlight chain")
 
     # this returns a dictionary of symptoms
-    extracted_terms = chain.run(input_text)
+    extracted_terms = await chain.arun(input_text)
+    print("after running highlight chain")
 
     # we want strings
     symptom_terms = [term_dict['symptom'] for term_dict in extracted_terms]
@@ -35,7 +38,7 @@ def load_text(filepath):
     docs = loader.load()
     return docs
 
-def summarize_text(input_text, symptom_terms):
+async def summarize_text(input_text, symptom_terms):
     # prompt string
     prompt_template = """Write doctor's notes on the following patient visit conversation:
 "{text}"
@@ -51,19 +54,25 @@ Notes:"""
     stuff_chain = StuffDocumentsChain(
         llm_chain=llm_chain, document_variable_name="text"
     )
+    print("before running summary chain")
+    result = await stuff_chain.arun(input_text)
+    print("after running summary chain")
 
     # Return the summarized result
-    return stuff_chain.run(input_text)
+    return result
 
 if __name__ == "__main__":
     filepath = 'data/clean_transcripts/CAR0001.txt'
 
-    # load call
-    loaded_text = load_text(filepath)
+    async def main():
+      # load call
+      loaded_text = load_text(filepath)
 
-    # highlights call
-    highlighted_terms = highlight_text(loaded_text)
+      # highlights call
+      highlighted_terms = await highlight_text(loaded_text)
 
-    # notes call
-    result = summarize_text(loaded_text, highlighted_terms)
+      # notes call
+      return await summarize_text(loaded_text, highlighted_terms)
+    result = asyncio.run(main())
+
     print(result)
