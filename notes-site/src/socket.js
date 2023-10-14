@@ -4,7 +4,7 @@ import RecordRTC from 'recordrtc'
 
 const URL = "localhost:5000";
 
-export const socket = io(URL);
+export const socket = io();
 
 export function useAudio() {
   const [isRecording, setIsRecording] = useState(false)
