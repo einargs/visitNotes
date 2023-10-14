@@ -2,6 +2,7 @@
 .env
 .idea
 .DS_Store
+**.swp
 __pycache__
 # Simple bash file holding the secret key variables
 secret_keys
