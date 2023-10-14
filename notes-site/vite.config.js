@@ -12,10 +12,13 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      /* This isn't working, I think because it refuses to proxy both http long
+         polling, which it always does at the start before upgrading, and
+         websockets.
       '/socket.io': {
-        target: 'ws://localhost:5174',
+        target: 'ws://localhost:8000',
         ws: true,
-      },
+      },*/
     },
   },
 })

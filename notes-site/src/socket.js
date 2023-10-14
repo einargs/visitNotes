@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react'
 import { io } from 'socket.io-client';
 import RecordRTC from 'recordrtc'
 
-const URL = "localhost:5000";
-
-export const socket = io();
+export const socket = io("localhost:8000");
 
 export function useAudio() {
   const [isRecording, setIsRecording] = useState(false)
@@ -78,19 +76,24 @@ export function useSocket() {
       setIsConnected(false);
     }
 
-    function onTranscriptUpdate(update) {
-      setSummary(update.summary)
-      setTranscript(update.transcript)
+    function onTranscriptUpdate(transcript) {
+      setTranscript(transcript)
+    }
+
+    function onNewSummary(summary) {
+      setSummary(summary)
     }
     
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('transcript-update', onTranscriptUpdate)
+    socket.on('new-summary', onNewSummary)
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('transcript-update', onTranscriptUpdate)
+    socket.off('new-summary', onNewSummary)
     };
   }, []);
   return { isConnected, summary, transcript }
