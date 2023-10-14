@@ -6,7 +6,6 @@ import asyncio
 import aiofiles
 import dotenv
 import summarize
-import threading
 import speech_recognizer as speech
 from socket_server import sio
 
@@ -33,7 +32,7 @@ def cleanup_recording_session(session):
 
 @sio.on('connect')
 async def handle_connect(sid, arg):
-  print("Connected")
+  print(f"Connected to {sid}")
   async with sio.session(sid) as session:
     session['transcript'] = []
 
@@ -63,7 +62,6 @@ async def handle_audio(sid, data):
   Gets a binary chunk of raw PCM data with 1 channel, 2 byte wide samples, and
   16000 samples per second.
   """
-  print("handle audio thread: {}".format(threading.get_ident()))
   async with sio.session(sid) as session:
     if 'speech_stream' not in session:
       # We check to see if the audio recognizer and stream is already set up.

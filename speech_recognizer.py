@@ -4,7 +4,6 @@ import os
 import asyncio
 import azure.cognitiveservices.speech as speech
 import azure.cognitiveservices.speech.audio as saudio
-import threading
 from socket_server import sio
 
 async def send_notes(sid, transcript):
@@ -30,7 +29,6 @@ async def send_recognized_event(sid, msg):
     print(f"Error: {err}")
 
 def start_audio_recognizer(sid):
-  print("start audio recognizer thread: {}".format(threading.get_ident()))
   speech_key = os.environ.get('SPEECH_KEY')
   speech_region = os.environ.get('SPEECH_REGION')
   speech_config = speech.SpeechConfig(speech_key, speech_region)
@@ -61,7 +59,6 @@ def start_audio_recognizer(sid):
   # We get the 
   loop = asyncio.get_running_loop()
   def recognized_text(event):
-    print("recognized_text thread: {}".format(threading.get_ident()))
     print("recognized: {}".format(event.result.text))
     # This callback runs in a different thread, so we call a method to tell the
     # event loop the server is running on to schedule send_recognized_event
