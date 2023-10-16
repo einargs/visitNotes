@@ -38,7 +38,7 @@
       ];
       azure-inputs = get-azure-inputs pkgs;
 
-      backend-app-env = (pkgs.poetry2nix.mkPoetryApplication {
+      backend-app-env = (pkgs.poetry2nix.mkPoetryEnv {
         projectDir = ./.;
         python = pkgs.python311;
         preferWheels = true;
@@ -50,7 +50,7 @@
                 ++ [ pkgs.gst_all_1.gstreamer ];
             });
         });
-      }).dependencyEnv.overrideAttrs (oldAttrs: {
+      }).overrideAttrs (oldAttrs: {
         buildInputs = azure-inputs;
       });
   in {
