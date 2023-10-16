@@ -20,35 +20,51 @@
         overlay = [ poetry2nix.overlay ];
       };
 
-      backend-app = pkgs.poetry2nix.mkPoetryApplication {
+      get-azure-inputs = p: with p; [
+        stdenv.cc
+        gcc
+        openssl_1_1
+        alsa-lib
+        libuuid
+        binutils
+        util-linux
+        wget
+        curl
+        autoconf
+        git
+        gitRepo
+        gnumake
+        unzip
+      ];
+      azure-inputs = get-azure-inputs pkgs;
+
+      backend-app-env = (pkgs.poetry2nix.mkPoetryApplication {
         projectDir = ./.;
-      };
+        python = pkgs.python311;
+        preferWheels = true;
+        overrides = pkgs.poetry2nix.overrides.withDefaults (self: super: {
+          azure-cognitiveservices-speech = super.azure-cognitiveservices-speech
+            .overridePythonAttrs (old: {
+              buildInputs = (old.buildInputs or [])
+                ++ get-azure-inputs pkgs
+                ++ [ pkgs.gst_all_1.gstreamer ];
+            });
+        });
+      }).dependencyEnv.overrideAttrs (oldAttrs: {
+        buildInputs = azure-inputs;
+      });
   in {
     devShells.x86_64-linux.default = (pkgs.buildFHSUserEnv {
       name = "audio";
       targetPkgs = pkgs: with pkgs; [
         # vlc
         docker
-        alsa-lib
-        python311Packages.virtualenv
         python311
         nodejs_20
         nodePackages.pnpm
-        gcc
-        openssl_1_1
-        libuuid
-        autoconf
-        binutils
-        curl
-        git
-        gitRepo
-        gnumake
-        stdenv.cc
-        unzip
-        util-linux
-        wget
         poetry
-      ];
+        #backend-app-env
+      ] ++ azure-inputs;
 
         # export PS1='\[\033[1;32m\][\[\e]0;\u@\h: \w\a\]dev-shell:\w]\$\[\033[0m\] '
       profile = ''
@@ -73,6 +89,13 @@
       '';*/ 
     }).env;
 
+    nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
+
+    };
+    packages.x86_64-linux.default = backend-app-env;
+
+    /* I am giving up on docker for right now and instead switching to a nixos
+     * vm.
     packages.x86_64-linux.default = with pkgs; pkgs.dockerTools.buildImage {
       name = "visit-notes";
       tag = "latest";
@@ -81,15 +104,15 @@
         pathsToLink = [ "/bin" ];
         paths = [
           dockerTools.fakeNss
-          backend-app.dependencyEnv
+          backend-app-env
         ];
       };
       config = {
-        Cmd = [ "hypercorn" "app:asgi" "-b" "localhost:80" ];
+        Cmd = [ "hypercorn" "app:asgi" "-b" "0.0.0.0:80" "--root-path" "${./.}" ];
         ExposedPorts = {
           "80/tcp" = {};
         };
       };
-    };
+    };*/
   };
 }
