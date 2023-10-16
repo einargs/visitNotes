@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "visitnotes"
+version = "0.1.0"
+description = "Generate doctor's notes from patient-doctor conversations."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-socketio = "^5.9.0"
+Quart = "^0.19.3"
+hypercorn = "^0.14.4"
+aiofiles = "^23.2.1"
+azure-cognitiveservices-speech = "^1.32.1"
+langchain = "^0.0.314"
+python-dotenv = "^1.0.0"
+openai = "^0.28.1"
+tiktoken = "^0.5.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
