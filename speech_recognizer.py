@@ -40,10 +40,10 @@ def start_audio_recognizer(sid):
   # to from elsewhere. I don't know if we need a lock for it.
   push_stream = saudio.PushAudioInputStream(audio_format)
   audio_config = speech.audio.AudioConfig(stream=push_stream)
-  recognizer = speech.SpeechRecognizer(
+  recognizer = speech.transcription.ConversationTranscriber(
     speech_config=speech_config, audio_config=audio_config)
   # We start the speech recognizer here.
-  recognizer.start_continuous_recognition_async()
+  recognizer.start_transcribing_async()
   # I'm not sure why we need to do this when it's already having a session
   # stopped or canceled event, but the docs say to do so.
   def stop_cb():
@@ -63,17 +63,25 @@ def start_audio_recognizer(sid):
     # This callback runs in a different thread, so we call a method to tell the
     # event loop the server is running on to schedule send_recognized_event
     # to happen soon.
-    coro = send_recognized_event(sid, event.result.text)
+    if event.result.reason == speech.ResultReason.RecognizedSpeech:
+        speaker = event.result.speaker_id
+        text = event.result.text
+        msg = f"{speaker}: {text} \n"
+    elif event.result.reason == speech.ResultReason.NoMatch:
+        msg = "Unable to Transcribe"
+    else:
+        msg = ''
+    coro = send_recognized_event(sid, msg)
     asyncio.run_coroutine_threadsafe(coro, loop)
 
   # We don't need the partial recognition events right now.
   # We could send them to the website and have them show up live as people are
   # talking, which could be cool.
   # recognizer.recognizing.connect(recognizing_text)
-  recognizer.recognized.connect(recognized_text)
+  recognizer.transcribed.connect(recognized_text)
   recognizer.session_stopped.connect(stop_cb)
   recognizer.canceled.connect(stop_cb)
   return push_stream, recognizer
 
 def end_recognition(recognizer):
-  recognizer.stop_continuous_recognition()
+  recognizer.stop_transcribing_async()
