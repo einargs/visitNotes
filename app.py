@@ -15,7 +15,7 @@ dotenv.load_dotenv()
 # If we end up needing quart, this is how you integerate the two:
 # https://python-socketio.readthedocs.io/en/latest/api.html#socketio.ASGIApp
 
-app = Quart(__name__)
+# app = Quart(__name__)
 
 # We load the transcript file in for testing. We use it for the
 # `send-transcript` event the website uses for testing UI.
@@ -81,9 +81,11 @@ async def handle_reset(sid):
   """This is basically just a test event to help the frontend test UI."""
   async with sio.session(sid) as session:
     session['lines_sent'] = 1
-    await sio.emit('transcript-update', data={
-      'transcript':transcript[0:session['lines_sent']*5],
-      'summary': summary }, to=sid)
+    lines = session['lines_sent']*5
+    await asyncio.gather(
+      sio.emit('transcript-update', to=sid, data=transcript[0:lines]),
+      sio.emit('new-summary', to=sid, data=f"TEST SUMMARY: {lines} lines")
+    )
 
 @sio.on('send-transcript')
 async def handle_transcript(sid):
@@ -99,4 +101,11 @@ async def handle_transcript(sid):
       sio.emit('new-summary', to=sid, data=f"TEST SUMMARY: {lines} lines")
     )
 
-asgi = socketio.ASGIApp(sio, other_asgi_app=app)
+asgi = socketio.ASGIApp(
+  sio,
+  static_files = {
+    '/':
+
+  }
+  # other_asgi_app=app
+)
