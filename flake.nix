@@ -20,7 +20,7 @@
         overlay = [ poetry2nix.overlay ];
       };
 
-      get-azure-inputs = p: with p; [
+      azure-inputs = with pkgs; [
         stdenv.cc
         gcc
         openssl_1_1
@@ -29,8 +29,11 @@
         binutils
         util-linux
       ];
-      azure-inputs = get-azure-inputs pkgs;
 
+      # Still don't know if this properly has everything and I can actually run
+      # stuff but we'll find out. I might need to use root path, I might be able
+      # to use python module syntax to get at an installed version of it?
+      # Probably just use root-path.
       backend-app-env = (pkgs.poetry2nix.mkPoetryEnv {
         projectDir = ./.;
         python = pkgs.python311;
@@ -39,11 +42,13 @@
           azure-cognitiveservices-speech = super.azure-cognitiveservices-speech
             .overridePythonAttrs (old: {
               buildInputs = (old.buildInputs or [])
-                ++ get-azure-inputs pkgs
+                ++ azure-inputs
                 ++ [ pkgs.gst_all_1.gstreamer ];
             });
         });
       });
+      # The actually built site.
+      site-dist = import ./notes-site/site-dist.nix pkgs;
   in {
     devShells.x86_64-linux.default = (pkgs.buildFHSUserEnv {
       name = "audio";
@@ -53,6 +58,7 @@
         python311
         nodejs_20
         nodePackages.pnpm
+        prefetch-npm-deps
         poetry
 
         wget
@@ -90,7 +96,10 @@
     nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
 
     };
-    packages.x86_64-linux.default = backend-app-env;
+    packages.x86_64-linux = {
+      app-env = backend-app-env;
+      site = site-dist;
+    };
 
     /* I am giving up on docker for right now and instead switching to a nixos
      * vm.
