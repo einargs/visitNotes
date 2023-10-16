@@ -1,3 +1,5 @@
+import os
+import pathlib
 from quart import Quart
 import wave
 import socketio
@@ -101,11 +103,18 @@ async def handle_transcript(sid):
       sio.emit('new-summary', to=sid, data=f"TEST SUMMARY: {lines} lines")
     )
 
+# Quick hack to let us serve the static files if an environment variable with
+# them is set. Used for letting us serve the static files from a docker
+# container.
+if (static_path := os.environ.get("STATIC_FILES")):
+  static_path = pathlib.Path(static_path)
+  static_files = {
+    '/': str(static_path) + "/"
+  }
+else:
+  static_files = {}
 asgi = socketio.ASGIApp(
   sio,
-  static_files = {
-    '/':
-
-  }
+  static_files=static_files
   # other_asgi_app=app
 )
