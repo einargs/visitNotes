@@ -28,13 +28,6 @@
         libuuid
         binutils
         util-linux
-        wget
-        curl
-        autoconf
-        git
-        gitRepo
-        gnumake
-        unzip
       ];
       azure-inputs = get-azure-inputs pkgs;
 
@@ -50,8 +43,6 @@
                 ++ [ pkgs.gst_all_1.gstreamer ];
             });
         });
-      }).overrideAttrs (oldAttrs: {
-        buildInputs = azure-inputs;
       });
   in {
     devShells.x86_64-linux.default = (pkgs.buildFHSUserEnv {
@@ -63,7 +54,14 @@
         nodejs_20
         nodePackages.pnpm
         poetry
-        #backend-app-env
+
+        wget
+        curl
+        autoconf
+        git
+        gitRepo
+        gnumake
+        unzip
       ] ++ azure-inputs;
 
         # export PS1='\[\033[1;32m\][\[\e]0;\u@\h: \w\a\]dev-shell:\w]\$\[\033[0m\] '
