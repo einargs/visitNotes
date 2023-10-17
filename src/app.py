@@ -12,7 +12,11 @@ import speech_recognizer as speech
 from socket_server import sio
 
 # We load the environment file
-dotenv.load_dotenv()
+# We provide an environment variable we use on the VM to point us to a new file.
+if (dotenv_path := os.environ.get("ENV_FILE")):
+  dotenv.load_dotenv(dotenv_path)
+else:
+  dotenv.load_dotenv()
 
 # If we end up needing quart, this is how you integerate the two:
 # https://python-socketio.readthedocs.io/en/latest/api.html#socketio.ASGIApp

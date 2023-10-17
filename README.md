@@ -14,7 +14,7 @@ We're going to use Quart (basically Flask but for asyncio), python-socketio,
 which has better support for sessions and also works with asyncio. To run it,
 we're using hypercorn. As such, just run:
 ```
-hypercorn app:asgi -b localhost:8000
+hypercorn src/app:asgi -b localhost:8000
 ```
 
 See hypercorn docs for more.
