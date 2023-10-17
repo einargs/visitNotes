@@ -5,12 +5,16 @@
     nixpkgs.url = "nixpkgs/nixos-23.05";
     poetry2nix.url = "github:nix-community/poetry2nix";
     poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   nixConfig = {
     bash-prompt = ''\[\033[1;32m\][\[\e]0;\u@\h: \w\a\]dev-shell:\w]\$\[\033[0m\] '';
   };
 
-  outputs = { self, nixpkgs, poetry2nix }: 
+  outputs = { self, nixpkgs, poetry2nix, nixos-generators }: 
   let system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
@@ -48,22 +52,15 @@
         });
       });
       # The actually built site.
+      # TODO: use callPackage
       site-dist = import ./notes-site/site-dist.nix pkgs;
 
-      # We're now using it because it will automatically have the openssl
-      # packages installed into without me having to deal with manually linking
-      # it in.
-      # TODO: use poetry2nix script or filter ./. with the tool poetry uses
-      # so whole package isn't put in the store
-      visit-notes-script = pkgs.writeShellScriptBin "visit-notes" ''
-          hypercorn ${./.}/app:asgi -b 0.0.0.0:80
-      '';
       # Here we include all the dependencies that it needs
-      visit-notes-app = pkgs.symlinkJoin {
+      visit-notes-for = script: pkgs.symlinkJoin {
         name = "visit-notes";
 
         paths = [
-          visit-notes-script 
+          (pkgs.writeShellScriptBin "visit-notes" script)
           backend-app-env
           pkgs.openssl_1_1.out
           pkgs.gst_all_1.gstreamer
@@ -74,17 +71,14 @@
             --prefix LD_LIBRARY_PATH : $out/lib
         '';
       };
-      /*visit-notes-app = pkgs.writeShellApplication {
-        name = "visit-notes-app";
-        # Do I need to include azure-inputs?
-        runtimeInputs = [
-          backend-app-env
-          pkgs.gst_all_1.gstreamer
-        ] ++ azure-inputs;
-        text = ''
-          hypercorn ${./.}/app:asgi -b 0.0.0.0:80
-        '';
-      };*/
+      # TODO: use poetry2nix script or filter ./. with the tool poetry uses
+      # so whole package isn't put in the store
+      visit-notes-vm-app = visit-notes-for ''
+        hypercorn ${./src}/app:asgi -b 0.0.0.0:$PORT
+      '';
+      visit-notes-docker-app = visit-notes-for ''
+        hypercorn ${./src}/app:asgi -b 0.0.0.0:80
+      '';
       visit-notes-docker = with pkgs; pkgs.dockerTools.buildImage {
         name = "visit-notes";
         tag = "latest";
@@ -105,7 +99,7 @@
 
           in [
             dockerTools.caCertificates
-            visit-notes-app
+            visit-notes-docker-app
           ] ++ shell-inputs;
         };
         config = {
@@ -114,16 +108,28 @@
             # see the openssl libraries. Not needed right now. You'd also need
             # to include the openssl libraries in the buildEnv
             # "LD_LIBRARY_PATH=/lib"
-            "MODULES=${./.}"
+            "MODULES=${./src}"
             "TRANSCRIPT=${./data/clean_transcripts/CAR0001.txt}"
             "STATIC_FILES=${site-dist}"
           ];
           Cmd = [ "${visit-notes-app}/bin/visit-notes" ];
+          # If we wanted to call it directly, which would be a pain.
           # Cmd = [ "hypercorn" "${./.}/app:asgi" "-b" "0.0.0.0:80" ];
           ExposedPorts = {
             "80/tcp" = {};
           };
         };
+      };
+      azure-image = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          visit-notes-site = site-dist;
+          visit-notes-app = visit-notes-vm-app;
+        };
+        modules = [
+          nixos-generators.nixosModules.all-formats
+          ./vm/config.nix
+        ];
       };
   in {
     devShells.x86_64-linux.default = (pkgs.buildFHSUserEnv {
@@ -169,15 +175,9 @@
       '';*/ 
     }).env;
 
-    nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
-
-    };
-
-    # Doesn't have the environmental variables needed to talk to the apis.
-    # apps.x86_64-linux.default = {
-    #   type = "app";
-    #   program = "${shell-app}/bin/shell-app";
-    # };
+    # To get an image we can deploy to azure do:
+    # nix build .#nixosConfigurations.my-machine.config.formats.azure
+    nixosConfigurations.azure-vm = azure-image;
 
     packages.x86_64-linux = {
       app-env = backend-app-env;
