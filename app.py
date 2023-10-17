@@ -21,7 +21,8 @@ dotenv.load_dotenv()
 
 # We load the transcript file in for testing. We use it for the
 # `send-transcript` event the website uses for testing UI.
-transcript_file = open('./data/clean_transcripts/CAR0001.txt')
+transcript_path = os.environ.get("TRANSCRIPT", './data/clean_transcripts/CAR0001.txt')
+transcript_file = open(transcript_path)
 transcript = list(filter(lambda str: str != "", transcript_file.read().splitlines()))
 transcript_file.close()
 
@@ -43,6 +44,7 @@ async def handle_disconnect(sid):
   """
   Here we clean up resources and file handlers if we disconnect early.
   """
+  print(f"Disconnected from {sid}")
   async with sio.session(sid) as session:
     cleanup_recording_session(session)
 
@@ -64,17 +66,22 @@ async def handle_audio(sid, data):
   Gets a binary chunk of raw PCM data with 1 channel, 2 byte wide samples, and
   16000 samples per second.
   """
-  async with sio.session(sid) as session:
-    if 'speech_stream' not in session:
-      # We check to see if the audio recognizer and stream is already set up.
-      # If it isn't, we start it.
-      stream, recognizer = speech.start_audio_recognizer(sid)
-      session['speech_stream'] = stream
-      session['speech_recognizer'] = recognizer
-    session['speech_stream'].write(data)
+  print(f"audio-chunk event from {sid}")
+  try:
+    async with sio.session(sid) as session:
+      if 'speech_stream' not in session:
+        # We check to see if the audio recognizer and stream is already set up.
+        # If it isn't, we start it.
+        stream, recognizer = speech.start_audio_recognizer(sid)
+        session['speech_stream'] = stream
+        session['speech_recognizer'] = recognizer
+      session['speech_stream'].write(data)
+  except Exception as err:
+    print(f"audio handling error: {err}")
 
 @sio.on('audio-end')
 async def handle_audio_end(sid, data):
+  print(f"audio-end event from {sid}")
   async with sio.session(sid) as session:
     cleanup_recording_session(session)
 

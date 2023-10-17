@@ -29,9 +29,12 @@ async def send_recognized_event(sid, msg):
     print(f"Error: {err}")
 
 def start_audio_recognizer(sid):
+  print("entered start_audio_recognizer")
   speech_key = os.environ.get('SPEECH_KEY')
   speech_region = os.environ.get('SPEECH_REGION')
+  logfile_path = os.environ.get('SPEECH_LOG_FILE', "logfile.txt")
   speech_config = speech.SpeechConfig(speech_key, speech_region)
+  speech_config.set_property(speech.PropertyId.Speech_LogFilename, logfile_path)
   speech_config.speech_recognition_language="en-US"
   # Set up the format for the audio stream
   audio_format = saudio.AudioStreamFormat(
@@ -44,6 +47,7 @@ def start_audio_recognizer(sid):
     speech_config=speech_config, audio_config=audio_config)
   # We start the speech recognizer here.
   recognizer.start_transcribing_async()
+  print("STARTED SPEECH RECOGNITION")
   # I'm not sure why we need to do this when it's already having a session
   # stopped or canceled event, but the docs say to do so.
   def stop_cb():
@@ -81,6 +85,7 @@ def start_audio_recognizer(sid):
   recognizer.transcribed.connect(recognized_text)
   recognizer.session_stopped.connect(stop_cb)
   recognizer.canceled.connect(stop_cb)
+  print("FINISHED AUDIO SETUP")
   return push_stream, recognizer
 
 def end_recognition(recognizer):
