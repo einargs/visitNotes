@@ -34,6 +34,33 @@ are also other kinds of metadata it might allow us to annotate with.
 It's important to remember that there can easily be more than two people
 speaking to a doctor in a meeting.
 
+TODO: this has gotten out of date. Talk to Kiriti.
+
+# Virtual Machine
+## Building Local
+To build a virtual machine on nixos for local testing, do:
+```
+nixos-rebuild build-vm --flake .#azure-vm
+```
+
+Then run the command it prompts you to run. Then you can ssh into it with:
+```
+ssh -p 8022 
+```
+
+If you don't know the password you can edit the `hashedPassword` option in
+`vm/config.nix` to use the output of running `mkpasswd`. You'll also need
+to uncomment the block inside of that.
+
+You'll also need to copy the `.env` file into `/var/lib/site-backend` on the
+virtual machine once it's running.
+
+## Building For Azure
+To build the azure image, you should only need to do:
+```
+nix build .#nixosConfigurations.my-machine.config.formats.azure
+```
+
 # Docker
 To build the docker images, you're going to need [nix
 installed](https://nixos.org/download.html).

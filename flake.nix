@@ -125,6 +125,7 @@
         specialArgs = {
           visit-notes-site = site-dist;
           visit-notes-app = visit-notes-vm-app;
+          transcript-file = ./data/clean_transcripts/CAR0001.txt;
         };
         modules = [
           nixos-generators.nixosModules.all-formats

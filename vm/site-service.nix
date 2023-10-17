@@ -1,4 +1,4 @@
-{ config, pkgs, lib, visit-notes-site, visit-notes-app, ... }:
+{ config, pkgs, lib, visit-notes-site, visit-notes-app, transcript-file, ... }:
 
 let cfg = config.services.site-backend; in
 with lib;
@@ -25,10 +25,10 @@ with lib;
       after = [ "network.target" ];
       path = with pkgs; [ tesseract4 ];
       environment = {
-        ENV_FILE = "/site-env";
+        ENV_FILE = "/var/lib/site-backend/env-file";
         PORT = builtins.toString cfg.port;
-        TRANSCRIPT = "${./data/clean_transcripts/CAR0001.txt}";
-        STATIC_FILES = "${site-dist}";
+        TRANSCRIPT = "${transcript-file}";
+        STATIC_FILES = "${visit-notes-site}";
       };
       serviceConfig = {
         StateDirectory = "site-backend";

@@ -21,10 +21,7 @@ async def send_recognized_event(sid, msg):
     async with sio.session(sid) as session:
       session['transcript'].append(msg)
       transcript = session['transcript']
-      await asyncio.gather(
-        send_notes(sid, transcript),
-        sio.emit('transcript-update', to=sid, data=transcript)
-      )
+      await sio.emit('transcript-update', to=sid, data=transcript)
   except Exception as err:
     print(f"Error: {err}")
 

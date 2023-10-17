@@ -87,7 +87,11 @@ async def handle_audio(sid, data):
 async def handle_audio_end(sid, data):
   print(f"audio-end event from {sid}")
   async with sio.session(sid) as session:
-    cleanup_recording_session(session)
+    try:
+      await speech.send_notes(sid, session['transcript'])
+      cleanup_recording_session(session)
+    except Exception as err:
+      print(f"Error: {err}")
 
 @sio.on('reset-transcript')
 async def handle_reset(sid):
