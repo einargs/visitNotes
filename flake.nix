@@ -74,7 +74,7 @@
       # TODO: use poetry2nix script or filter ./. with the tool poetry uses
       # so whole package isn't put in the store
       visit-notes-vm-app = visit-notes-for ''
-        hypercorn ${./src}/app:asgi -b 0.0.0.0:$PORT
+        hypercorn ${./src}/app:asgi -b 127.0.0.1:$PORT
       '';
       visit-notes-docker-app = visit-notes-for ''
         hypercorn ${./src}/app:asgi -b 0.0.0.0:80
@@ -137,6 +137,7 @@
       name = "audio";
       targetPkgs = pkgs: with pkgs; [
         # vlc
+        azure-cli
         docker
         python311
         nodejs_20

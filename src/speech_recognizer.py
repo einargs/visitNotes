@@ -29,9 +29,10 @@ def start_audio_recognizer(sid):
   print("entered start_audio_recognizer")
   speech_key = os.environ.get('SPEECH_KEY')
   speech_region = os.environ.get('SPEECH_REGION')
-  logfile_path = os.environ.get('SPEECH_LOG_FILE', "logfile.txt")
+  logfile_path = os.environ.get('SPEECH_LOG_FILE')
   speech_config = speech.SpeechConfig(speech_key, speech_region)
-  speech_config.set_property(speech.PropertyId.Speech_LogFilename, logfile_path)
+  if logfile_path:
+    speech_config.set_property(speech.PropertyId.Speech_LogFilename, logfile_path)
   speech_config.speech_recognition_language="en-US"
   # Set up the format for the audio stream
   audio_format = saudio.AudioStreamFormat(

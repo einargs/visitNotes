@@ -1,22 +1,13 @@
-{ pkgs, modulesPath, ... }: {
+{ pkgs, modulesPath, visit-notes-site, ... }: {
   imports = [
-    # FOR LOCAL YOU ALSO NEED TO UNCOMMENT THIS
-    # "${modulesPath}/virtualisation/qemu-vm.nix"
+    # For local testing uncomment this
+    ./local.nix
     ./site-service.nix
   ];
-  networking.firewall.allowedTCPPorts = [ 80 443 8000 ];
-  # we'll use azure to configure our users for us
-  # users.mutableUsers = true;
+  networking.firewall.allowedTCPPorts = [ 80 443 8080 ];
   users.mutableUsers = false;
   networking.hostName = "visit-notes";
-  /* UNCOMMENT THIS TO MAKE LOCAL TESTING EASY
-  networking.firewall.enable = false;
-  # When we're locally virtualizing the machine, forward ports so we can test
-  # the server
-  virtualisation.forwardPorts = [
-    { from = "host"; host.port = 8000; guest.port = 80; }
-    { from = "host"; host.port = 8022; guest.port = 22; }
-  ];*/
+
   users.users.mtsu = {
     isNormalUser = true;
     home = "/home/mtsu";
@@ -33,6 +24,64 @@
   };
   services.site-backend = {
     enable = true;
-    port = 80;
+    port = 8080;
+  };
+  /*security.acme = {
+    acceptTerms = true;
+    defaults.email = "egs3d@mtmail.mtsu.edu";
+  };*/
+  services.nginx = {
+    enable = true;
+    /*httpConfig = ''
+      http {
+        server {
+          listen 80;
+
+          location /socket.io/ {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $host;
+
+            proxy_pass http://localhost:3000;
+
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+          }
+        }
+      }
+    '';*/
+    appendHttpConfig = ''
+      upstream site_backend {
+        server 127.0.0.1:8080;
+      }
+    '';
+    virtualHosts = {
+      "audio.einargs.dev" = {
+        # We'll turn this on once we have a certificate
+        # forceSSL = true;
+        # enableACME = true;
+        forceSSL = true;
+        # addSSL = true;
+        locations."/" = {
+          root = "${visit-notes-site}/";
+          # priority = 100;
+        };
+        locations."/socket.io/" = {
+          # these duplicate some of the stuff in extraConfig
+          # recommendedProxySettings = true;
+          # proxyWebsockets = true;
+          # priority = 50;
+          proxyPass = "http://site_backend"; # The socket.io path is kept
+          extraConfig = ''
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $host;
+
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+          '';
+        };
+      };
+    };
   };
 }

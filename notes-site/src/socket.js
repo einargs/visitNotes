@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react'
 import { io } from 'socket.io-client';
 import RecordRTC from 'recordrtc'
 
-export const socket = io("localhost:8000");
+// export const socket = io("localhost:8000");
+// TODO: set up a config variable or something where it can be localhost in
+// development and non-localhost in production. Or get the dev server proxy
+// working again.
+export const socket = io();
 
 export function useAudio() {
   const [isRecording, setIsRecording] = useState(false)

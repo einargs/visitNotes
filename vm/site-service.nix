@@ -20,13 +20,13 @@ with lib;
   config = mkIf cfg.enable {
     systemd.services.site-backend = {
       # TODO: figure out how to setup the proper user.
-      description = "recipe-ocr server";
+      description = "socket.io backend for the site";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
-      path = with pkgs; [ tesseract4 ];
       environment = {
         ENV_FILE = "/var/lib/site-backend/env-file";
         PORT = builtins.toString cfg.port;
+        # SPEECH_LOG_FILE = "/var/lib/site-backend/speech-log.txt";
         TRANSCRIPT = "${transcript-file}";
         STATIC_FILES = "${visit-notes-site}";
       };
