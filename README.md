@@ -49,16 +49,26 @@ Then run the command it prompts you to run. Then you can ssh into it with:
 ssh -p 8022 mtsu@localhost
 ```
 
+You'll need to add the selfsigned.crt file to your browser's certificate
+management. Going to localhost:8000 will get you the http port, which will try
+to redirect you to ssl but fail because this is a different port than in
+production. So go straight to https with `https://localhost:8443`.
+
 If you don't know the password you can edit the `hashedPassword` option in
 `vm/config.nix` to use the output of running `mkpasswd`.
 
 You'll also need to copy the `.env` file into `/var/lib/site-backend` on the
 virtual machine once it's running.
 
+You can use scp to copy files.
+```
+scp ./.env scp://mtsu@localhost:8022/env-file
+```
+
 ## Building For Azure
 To build the azure image, you should only need to do:
 ```
-nix build .#nixosConfigurations.my-machine.config.formats.azure
+nix build .#nixosConfigurations.azure-vm.config.formats.azure
 ```
 
 ## Deploying Azure
@@ -146,6 +156,8 @@ Create a VM using the latest version of the image definition.
   to resolve a url is configured.
 - We use a `Standard_B1s` which is very cheap but only has 1 GB of RAM.
 - The `Standard_B1ls` is half the price for 0.5 GB of RAM.
+- Delete options when creating a VM:
+  [docs](https://learn.microsoft.com/en-us/azure/virtual-machines/delete?tabs=cli2%2Ccli3%2Cportal4%2Cportal5#set-delete-options-when-creating-a-vm).
 ```sh
 az vm create -g tnhimss -n audioVM \
     --image /subscriptions/3ecd1513-0871-4f6f-a0e7-7411e074b783/resourceGroups/tnhimss/providers/Microsoft.Compute/galleries/nixos_images/images/tnhimss \
@@ -154,6 +166,26 @@ az vm create -g tnhimss -n audioVM \
     --ssh-key-name audioBackend002_key \
     --size Standard_B1s \
     --os-disk-size-gb 5
+```
+
+Right now you'll then need to go into the portal and change the network
+interface to allow HTTP and HTTPS. TODO: find command for this.
+
+## Connecting to Azure
+To ssh into it you can do:
+```
+ssh -i ~/.ssh/audioBackend002_key.pem mtsu@audio.einargs.dev
+```
+Currently you do not need the key and just the password is enough, but I am
+working on fixing this. I think I need to change the settings in the openssh.
+
+To copy the env file over into `/home/mtsu/env-file`, you can do:
+```
+scp -i ~/.ssh/audioBackend002_key.pem ./.env scp://mtsu@audio.einargs.dev/env-file
+```
+Then to install it you just ssh in and do:
+```
+sudo mv ~/env-file /var/lib/site-backend/
 ```
 
 # Docker

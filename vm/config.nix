@@ -1,7 +1,7 @@
 { pkgs, modulesPath, visit-notes-site, ... }: {
   imports = [
     # For local testing uncomment this
-    ./local.nix
+    # ./local.nix
     ./site-service.nix
   ];
   networking.firewall.allowedTCPPorts = [ 80 443 8080 ];
@@ -26,30 +26,12 @@
     enable = true;
     port = 8080;
   };
-  /*security.acme = {
+  security.acme = {
     acceptTerms = true;
     defaults.email = "egs3d@mtmail.mtsu.edu";
-  };*/
+  };
   services.nginx = {
     enable = true;
-    /*httpConfig = ''
-      http {
-        server {
-          listen 80;
-
-          location /socket.io/ {
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header Host $host;
-
-            proxy_pass http://localhost:3000;
-
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-          }
-        }
-      }
-    '';*/
     appendHttpConfig = ''
       upstream site_backend {
         server 127.0.0.1:8080;
@@ -58,8 +40,7 @@
     virtualHosts = {
       "audio.einargs.dev" = {
         # We'll turn this on once we have a certificate
-        # forceSSL = true;
-        # enableACME = true;
+        enableACME = true;
         forceSSL = true;
         # addSSL = true;
         locations."/" = {
