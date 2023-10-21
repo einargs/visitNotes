@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 function TranscriptLine({line}) {
-  const isDoctor = line.startsWith("D:")
+  const isDoctor = line.startsWith("Guest-2:")
   const type = isDoctor ? "bg-slate-100" : ""
   return (
     <li className={`w-full block p-2 ${type}`}>

@@ -9,12 +9,18 @@ We're using pnpm. To install it, go
 To run the frontend in development mode, `cd` into `notes-site` and run
 `pnpm run dev`.
 
+Because pnpm doesn't want to provide an easy way to turn their lockfile into a
+normal package-lock.json file, we need to run `npm i --package-lock-only` to
+update the lockfile so that nix can read it to build everything. We'll probably
+need to transition over to using only npm, but for now that would be a pain
+because of the way shadcn-ui is configured.
+
 # Backend
 We're going to use Quart (basically Flask but for asyncio), python-socketio,
 which has better support for sessions and also works with asyncio. To run it,
 we're using hypercorn. As such, just run:
 ```
-hypercorn src/app:asgi -b localhost:8000
+hypercorn src/app:asgi -b [::1]:8000
 ```
 
 See hypercorn docs for more.
