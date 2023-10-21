@@ -6,19 +6,21 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [{
+      find: "@",
+      replacement: path.resolve(__dirname, "./src"),
+    }],
   },
   server: {
     proxy: {
       /* This isn't working, I think because it refuses to proxy both http long
          polling, which it always does at the start before upgrading, and
-         websockets.
+         websockets. */
       '/socket.io': {
-        target: 'ws://localhost:8000',
+        target: 'ws://[::1]:8000',
+        changeOrigin: true,
         ws: true,
-      },*/
+      },
     },
   },
 })

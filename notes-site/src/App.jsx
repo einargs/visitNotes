@@ -2,6 +2,16 @@ import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import { socket, useSocket } from './socket'
 import { SendAudio } from './SendAudio.jsx'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 function TranscriptLine({line}) {
   const isDoctor = line.startsWith("D:")
@@ -16,7 +26,7 @@ function TranscriptLine({line}) {
 function SummaryBox({summary}) {
   return (
     <div className="sticky top-20 basis-1/3 rounded bg-muted shadow-md mx-2 p-2">
-      <h2 className="text-2xl px-2 pb-2">Summary</h2>
+      <h2 className="text-2xl px-2 pb-2">Doctor Notes</h2>
       <div className="rounded p-2 bg-background">
         {summary ? summary : "No summary generated yet."}
       </div>
@@ -59,13 +69,40 @@ function Header({ isConnected }) {
   )
 }
 
+function ErrorAlert({error, dismissError}) {
+  function onChange(bool) {
+    if (!bool) {
+      dismissError()
+    }
+  }
+  return (
+    <AlertDialog open={error !== null} onOpenChange={onChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>An error occured</AlertDialogTitle>
+          <AlertDialogDescription>
+            {error}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 function App() {
-  const {isConnected, transcript, summary } = useSocket()
+  const {isConnected, transcript, summary, error, setError } = useSocket()
+  function handleDismiss() {
+    setError(null)
+  }
 
   return (
     <>
       <Header isConnected={isConnected} />
       <main className="p-4 space-y-4">
+        <ErrorAlert error={error} dismissError={handleDismiss} />
         <div className="flex flex-row items-center space-x-4">
           <p>
             Click the button to tell the server to send the next line of dialogue.

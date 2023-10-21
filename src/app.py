@@ -89,9 +89,11 @@ async def handle_audio_end(sid, data):
   async with sio.session(sid) as session:
     try:
       await speech.send_notes(sid, session['transcript'])
-      cleanup_recording_session(session)
     except Exception as err:
       print(f"Error: {err}")
+      await sio.emit('error', to=sid, data=str(err))
+    finally:
+      cleanup_recording_session(session)
 
 @sio.on('reset-transcript')
 async def handle_reset(sid):

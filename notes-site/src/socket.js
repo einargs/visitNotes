@@ -68,6 +68,7 @@ export function useAudio() {
 
 export function useSocket() {
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [error, setError] = useState(null)
   const [summary, setSummary] = useState("")
   const [transcript, setTranscript] = useState([])
 
@@ -87,18 +88,24 @@ export function useSocket() {
     function onNewSummary(summary) {
       setSummary(summary)
     }
+
+    function onError(err) {
+      setError(err)
+    }
     
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('transcript-update', onTranscriptUpdate)
     socket.on('new-summary', onNewSummary)
+    socket.on('error', onError)
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('transcript-update', onTranscriptUpdate)
-    socket.off('new-summary', onNewSummary)
+      socket.off('error', onError)
+      socket.off('new-summary', onNewSummary)
     };
   }, []);
-  return { isConnected, summary, transcript }
+  return { isConnected, summary, transcript, error, setError }
 }

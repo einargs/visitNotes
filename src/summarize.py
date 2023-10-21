@@ -87,7 +87,9 @@ async def create_transcript_notes(transcript):
     return await summarize_text(docs, highlights)
 
 if __name__ == "__main__":
-    filepath = 'data/clean_transcripts/CAR0001.txt'
+    # How many lines from the transcript to use.
+    LINE_COUNT = 15
+    filepath = './data/clean_transcripts/CAR0001.txt'
     load_dotenv()
     async def main():
         async with aiofiles.open(filepath) as file:
@@ -96,7 +98,7 @@ if __name__ == "__main__":
             text = await file.read()
             transcript = text.split("\n\n")
             # contracting transcript to lower api usage when testing.
-            transcript = transcript[:15]
+            transcript = transcript[:LINE_COUNT]
             docs = split_transcript(transcript)
             print(f"docs #{len(docs)}")
             # Get important terms
