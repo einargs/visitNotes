@@ -42,6 +42,7 @@
         # We'll turn this on once we have a certificate
         enableACME = true;
         forceSSL = true;
+        serverAliases = [ "query.einargs.dev" ];
         # addSSL = true;
         locations."/" = {
           root = "${visit-notes-site}/";

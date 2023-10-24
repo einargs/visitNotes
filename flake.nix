@@ -54,6 +54,7 @@
       # The actually built site.
       # TODO: use callPackage
       site-dist = import ./notes-site/site-dist.nix pkgs;
+      transcript-file = ../data/clean_transcripts/CAR0001.txt;
 
       # Here we include all the dependencies that it needs
       visit-notes-for = script: pkgs.symlinkJoin {
@@ -125,7 +126,7 @@
         specialArgs = {
           visit-notes-site = site-dist;
           visit-notes-app = visit-notes-vm-app;
-          transcript-file = ./data/clean_transcripts/CAR0001.txt;
+          inherit transcript-file;
         };
         modules = [
           nixos-generators.nixosModules.all-formats
@@ -181,8 +182,14 @@
     # nix build .#nixosConfigurations.my-machine.config.formats.azure
     nixosConfigurations.azure-vm = azure-image;
 
+    nixosModules.backend = args: import ./site-service.nix ({
+      visit-notes-site = site-dist;
+      visit-notes-app = visit-notes-vm-app;
+      inherit transcript-file;
+    } // args);
+
     packages.x86_64-linux = {
-      app-env = backend-app-env;
+      vm-app = visit-notes-vm-app;
       site = site-dist;
       docker = visit-notes-docker;
     };
