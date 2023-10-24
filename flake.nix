@@ -40,6 +40,7 @@
       # Probably just use root-path.
       backend-app-env = (pkgs.poetry2nix.mkPoetryEnv {
         projectDir = ./.;
+        src = ./src;
         python = pkgs.python311;
         preferWheels = true;
         overrides = pkgs.poetry2nix.overrides.withDefaults (self: super: {
@@ -52,8 +53,7 @@
         });
       });
       # The actually built site.
-      # TODO: use callPackage
-      site-dist = import ./notes-site/site-dist.nix pkgs;
+      site-dist = pkgs.callPackage ./notes-site/site-dist.nix {};
       transcript-file = ../data/clean_transcripts/CAR0001.txt;
 
       # Here we include all the dependencies that it needs
@@ -182,7 +182,7 @@
     # nix build .#nixosConfigurations.my-machine.config.formats.azure
     nixosConfigurations.azure-vm = azure-image;
 
-    nixosModules.backend = args: import ./site-service.nix ({
+    nixosModules.backend = args: import ./vm/site-service.nix ({
       visit-notes-site = site-dist;
       visit-notes-app = visit-notes-vm-app;
       inherit transcript-file;

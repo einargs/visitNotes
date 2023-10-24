@@ -10,10 +10,15 @@ To run the frontend in development mode, `cd` into `notes-site` and run
 `pnpm run dev`.
 
 Because pnpm doesn't want to provide an easy way to turn their lockfile into a
-normal package-lock.json file, we need to run `npm i --package-lock-only` to
+normal package-lock.json file, we use `npm shrinkwrap` to generate a
+lockfile we can read. It will generate `npm-shrinkwrap.json` which we can then
+rename to `package-lock.json`.
+
+OLD: we need to run `npm i --package-lock-only` to
 update the lockfile so that nix can read it to build everything. We'll probably
 need to transition over to using only npm, but for now that would be a pain
-because of the way shadcn-ui is configured.
+because of the way shadcn-ui is configured. It turns out we can just use
+`npm shrinkwrap`. 
 
 # Backend
 We're going to use Quart (basically Flask but for asyncio), python-socketio,
@@ -47,7 +52,7 @@ TODO: this has gotten out of date. Talk to Kiriti.
 To build a virtual machine on nixos for local testing, first go into
 `vm/config.nix` and uncomment the import of `./local.nix`. Then do:
 ```
-nixos-rebuild build-vm --flake .#azure-vm
+nixos-rebuild build-vm --fast --flake .#azure-vm
 ```
 
 Then run the command it prompts you to run. Then you can ssh into it with:
