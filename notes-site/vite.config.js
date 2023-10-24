@@ -11,7 +11,7 @@ export default defineConfig({
       replacement: path.resolve(__dirname, "./src"),
     },{
       find: "@recordings",
-      replacement: path.resolve(__dirname, "../data/audio_recordings")
+      replacement: path.resolve(__dirname, "./recordings")
     }],
   },
   server: {

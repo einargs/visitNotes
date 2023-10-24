@@ -134,17 +134,18 @@ az sig image-version create --resource-group tnhimss \
     --os-vhd-uri https://mtsutnhimss.blob.core.windows.net/audiobackendimage1/audioBackend.vhd
 ```
 
-Now remember to deallocate and delete the previous the machine with:
+Now remember to deallocate and delete the previous the
+machine with the below. `--no-wait` is an option.
 ```sh
-az vm deallocate --name audioVM --no-wait \
+az vm deallocate --name audioVM \
     --resource-group tnhimss \
     --subscription 3ecd1513-0871-4f6f-a0e7-7411e074b783
 ```
 
 TODO: You may be able to just run delete without a preceding deallocate,
-I'm not sure.
+I'm not sure. `--no-wait` is an option.
 ```sh
-az vm delete --name audioVM --no-wait --yes \
+az vm delete --name audioVM --yes \
     --resource-group tnhimss \
     --subscription 3ecd1513-0871-4f6f-a0e7-7411e074b783
 ```
@@ -171,11 +172,14 @@ az vm create -g tnhimss -n audioVM \
     --public-ip-address audioBackend-ip \
     --ssh-key-name audioBackend002_key \
     --size Standard_B1s \
-    --os-disk-size-gb 5
+    --os-disk-size-gb 128
 ```
 
 Right now you'll then need to go into the portal and change the network
-interface to allow HTTP and HTTPS. TODO: find command for this.
+interface to allow HTTP and HTTPS. TODO: find command for this. We can tell it
+to use an existing network security group with `--nsg name`. Thus, next time we
+delete it, create a new nsg (so it won't be deleted when the vm is deleted) and
+associate it with this.
 
 ## Connecting to Azure
 To ssh into it you can do:
