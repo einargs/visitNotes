@@ -69,11 +69,11 @@ def start_audio_recognizer(sid):
     if event.result.reason == speech.ResultReason.RecognizedSpeech:
         speaker = event.result.speaker_id
         text = event.result.text
-        msg = f"{speaker}: {text} \n"
+        msg = {'speaker' : speaker, 'text' : text} 
     elif event.result.reason == speech.ResultReason.NoMatch:
-        msg = "Unable to Transcribe"
+        msg = {"speaker": "System" , "text" : "Unable to Transcribe"} 
     else:
-        msg = ''
+        msg = {"speaker" : "None" ,  "text" : ""} 
     coro = send_recognized_event(sid, msg)
     asyncio.run_coroutine_threadsafe(coro, loop)
 
