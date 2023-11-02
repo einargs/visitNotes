@@ -80,6 +80,7 @@ Notes:"""
 
 async def create_transcript_notes(transcript):
     """Take notes on a transcript of a doctor-patient conversation."""
+    transcript = [f"{line['speaker']}: {line['text']}" for line in transcript] 
     docs = split_transcript(transcript)
     # Get important terms
     highlights = await highlight_text(docs)
