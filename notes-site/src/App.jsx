@@ -62,8 +62,8 @@ function Header({ isConnected }) {
         <span className="block text-3xl">Connected: {isConnected ? "yes" : "no"}</span>
       </div>
       <div className="flex flex-row items-center space-x-4">
-        <Button onClick={resetTranscript}>Reset Transcript</Button>
-        <Button onClick={moreTranscript}>More Transcript</Button>
+        // <Button onClick={resetTranscript}>Reset Transcript</Button>
+        // <Button onClick={moreTranscript}>More Transcript</Button>
         <SendAudio />
       </div>
     </header>
@@ -106,7 +106,11 @@ function App() {
         <ErrorAlert error={error} dismissError={handleDismiss} />
         <div className="flex flex-row items-center space-x-4">
           <p>
-            Click the button to tell the server to send the next line of dialogue.
+            To use the microphone to record a live sentence, select microphone
+            from the dropdown menu after clicking Start Transcription. To use
+            a simulated, pre-recorded conversation from a dataset created by
+            doctors, select a recording from the Prerecorded Interviews section
+            of the dropdown menu.
           </p>
         </div>
         <div className="flex flex-row items-start">

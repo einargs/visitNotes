@@ -27,6 +27,8 @@ we're using hypercorn. As such, just run:
 ```
 hypercorn src/app:asgi -b [::1]:8000
 ```
+Make sure to use `[::1]`; for some reason it makes a difference for the vite
+proxy.
 
 See hypercorn docs for more.
 

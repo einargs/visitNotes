@@ -18,13 +18,12 @@ export default defineConfig({
     fs: {
       allow: [
         searchForWorkspaceRoot(process.cwd()),
-        '../data/audio_recordings/'
+        // We moved the ones we need to the recordings dir to make packaging
+        // easier.
+        // '../data/audio_recordings/'
       ],
     },
     proxy: {
-      /* This isn't working, I think because it refuses to proxy both http long
-         polling, which it always does at the start before upgrading, and
-         websockets. */
       '/socket.io': {
         target: 'ws://[::1]:8000',
         changeOrigin: true,
