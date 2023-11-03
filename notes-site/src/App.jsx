@@ -17,7 +17,7 @@ import logo from '/audio-logo.png'
 function TranscriptLine({line}) {
   const isDoctor = line['speaker'] == 'Guest-1'
   const type = isDoctor ? "bg-slate-100" : ""
-  const speaker = isDoctor ? "Docter" : "Patient"
+  const speaker = isDoctor ? "Doctor" : "Patient"
   return (
     <li className={`w-full block p-2 ${type}`}>
       {speaker}: {line['text']}
