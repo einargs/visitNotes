@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import logo from '/audio-logo.png'
 
 function TranscriptLine({line}) {
   const isDoctor = line['speaker'] == 'Guest-1'
@@ -57,13 +58,14 @@ function Header({ isConnected }) {
   }
   return (
     <header className="sticky top-0 z-10 bg-background w-full flex flex-row p-4 items-center justify-between shadow-md">
-      <div className="flex flex-row items-baseline space-x-4">
-        <h1 className="text-4xl">Simple Prototype</h1>
-        <span className="block text-3xl">Connected: {isConnected ? "yes" : "no"}</span>
+      <div className="flex flex-row items-center space-x-4">
+        <img className="h-12" src={logo} alt="Logo" />
+        <h1 className="text-4xl">TrueBlueMD</h1>
+        {/*<span className="block text-2l">{isConnected ? "Connected" : "Not Connected"}</span>*/}
       </div>
       <div className="flex flex-row items-center space-x-4">
-        // <Button onClick={resetTranscript}>Reset Transcript</Button>
-        // <Button onClick={moreTranscript}>More Transcript</Button>
+        {/*<Button onClick={resetTranscript}>Reset Transcript</Button>
+        <Button onClick={moreTranscript}>More Transcript</Button>*/}
         <SendAudio />
       </div>
     </header>
