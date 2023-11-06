@@ -4,11 +4,12 @@ import os
 import asyncio
 import azure.cognitiveservices.speech as speech
 import azure.cognitiveservices.speech.audio as saudio
-from socket_server import sio
+from socket_server import sio, send_error
 
 async def send_notes(sid, transcript):
   """Create notes from the transcript and send them to the website."""
   print("STARTING SEND NOTES")
+  # notes = "NOTES" # TODO: Change back!
   notes = await create_transcript_notes(transcript)
   print("GOT NOTES")
   await sio.emit('new-summary', to=sid, data=notes)
@@ -19,12 +20,17 @@ async def send_recognized_event(sid, msg):
   """
   try:
     async with sio.session(sid) as session:
-      session['transcript'].append(msg)
       transcript = session['transcript']
+      if len(transcript) > 0 and transcript[-1]['speaker'] == msg['speaker']:
+        transcript[-1]['text'] += " " + msg['text']
+      else:
+        transcript.append(msg)
+
+      session['transcript'] = transcript
       await sio.emit('transcript-update', to=sid, data=transcript)
   except Exception as err:
-    print(f"Error: {err}")
-    await sio.emit('error', to=sid, data=str(err))
+    print(f"Audio sending error: {err}")
+    await send_error(err, False, to=sid)
 
 def start_audio_recognizer(sid):
   print("entered start_audio_recognizer")

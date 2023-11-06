@@ -9,7 +9,7 @@ import aiofiles
 import dotenv
 import summarize
 import speech_recognizer as speech
-from socket_server import sio
+from socket_server import sio, send_error
 
 # We load the environment file
 # We provide an environment variable we use on the VM to point us to a new file.
@@ -22,13 +22,6 @@ else:
 # https://python-socketio.readthedocs.io/en/latest/api.html#socketio.ASGIApp
 
 # app = Quart(__name__)
-
-# We load the transcript file in for testing. We use it for the
-# `send-transcript` event the website uses for testing UI.
-transcript_path = os.environ.get("TRANSCRIPT", './data/clean_transcripts/CAR0001.txt')
-transcript_file = open(transcript_path)
-transcript = list(filter(lambda str: str != "", transcript_file.read().splitlines()))
-transcript_file.close()
 
 def cleanup_recording_session(session):
   if 'speech_recognizer' in session:
@@ -70,7 +63,6 @@ async def handle_audio(sid, data):
   Gets a binary chunk of raw PCM data with 1 channel, 2 byte wide samples, and
   16000 samples per second.
   """
-  print(f"audio-chunk event from {sid}")
   try:
     async with sio.session(sid) as session:
       if 'speech_stream' not in session:
@@ -82,43 +74,19 @@ async def handle_audio(sid, data):
       session['speech_stream'].write(data)
   except Exception as err:
     print(f"audio handling error: {err}")
+    await send_error(err, True, to=sid)
 
 @sio.on('audio-end')
-async def handle_audio_end(sid, data):
+async def handle_audio_end(sid):
   print(f"audio-end event from {sid}")
   async with sio.session(sid) as session:
     try:
       await speech.send_notes(sid, session['transcript'])
     except Exception as err:
-      print(f"Error: {err}")
-      await sio.emit('error', to=sid, data=str(err))
+      print(f"note creation error: {err}")
+      await send_error(err, show=True, to=sid)
     finally:
       cleanup_recording_session(session)
-
-@sio.on('reset-transcript')
-async def handle_reset(sid):
-  """This is basically just a test event to help the frontend test UI."""
-  async with sio.session(sid) as session:
-    session['lines_sent'] = 1
-    lines = session['lines_sent']*5
-    await asyncio.gather(
-      sio.emit('transcript-update', to=sid, data=transcript[0:lines]),
-      sio.emit('new-summary', to=sid, data=f"TEST SUMMARY: {lines} lines")
-    )
-
-@sio.on('send-transcript')
-async def handle_transcript(sid):
-  """This is basically just a test event to help the frontend test UI."""
-  global transcript
-  async with sio.session(sid) as session:
-    if 'lines_sent' not in session:
-      session['lines_sent'] = 0
-    session['lines_sent'] += 1
-    lines = session['lines_sent']*5
-    await asyncio.gather(
-      sio.emit('transcript-update', to=sid, data=transcript[0:lines]),
-      sio.emit('new-summary', to=sid, data=f"TEST SUMMARY: {lines} lines")
-    )
 
 # Quick hack to let us serve the static files if an environment variable with
 # them is set. Used for letting us serve the static files from a docker

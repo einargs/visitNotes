@@ -77,8 +77,8 @@ export function useAudio() {
     return () => {
       if (recorder !== null) {
         recorder.stopRecording(() => {
-          const file = recorder.getBlob()
-          socket.emit('audio-end', file)
+          socket.emit('audio-end')
+          console.log("Sending audio-end")
         })
       }
       audioContext?.close()
@@ -96,10 +96,12 @@ export function useSocket() {
   useEffect(() => {
     function onConnect() {
       setIsConnected(true);
+      console.log("Connected")
     }
 
     function onDisconnect() {
       setIsConnected(false);
+      console.log("Disconnected")
     }
 
     function onTranscriptUpdate(transcript) {
@@ -110,8 +112,11 @@ export function useSocket() {
       setSummary(summary)
     }
 
-    function onError(err) {
-      setError(err)
+    function onError(err, display) {
+      if (display) {
+        setError(err)
+      }
+      console.error("Server error:", err)
     }
     
     socket.on('connect', onConnect);
