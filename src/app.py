@@ -108,7 +108,7 @@ async def get_transcript_text(transcript_name):
       elif speaker == "P: ":
         msg = line[3:].strip()
         transcript.append({
-          'speaker': "Guest-1",
+          'speaker': "Guest-2",
           'text': msg
         })
       else:
