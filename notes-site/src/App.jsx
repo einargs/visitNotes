@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
-import { socket, useSocket } from './socket'
-import { SendAudio } from './SendAudio.jsx'
+import { useSocket } from './socket'
+import { SendTranscript, SendAudio } from './SendAudio.jsx'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Loader2 } from 'lucide-react'
 import logo from '/audio-logo.png'
 
 function TranscriptLine({line}) {
@@ -25,13 +26,25 @@ function TranscriptLine({line}) {
   )
 }
 
-function SummaryBox({summary}) {
+function LoadingSummary() {
+  return (
+    <div className="rounded p-2 bg-background flex flex-col items-center">
+      <Loader2 size={96} color="#3ca334" strokeWidth={2}
+        className="animate-spin" />
+    </div>
+  )
+}
+
+function SummaryBox({summary, generatingSummary}) {
+  const text = (
+    <div className="rounded p-2 bg-background">
+      <p>{summary ? summary : "No summary generated yet."}</p>
+    </div>
+  )
   return (
     <div className="sticky top-20 basis-1/3 rounded bg-muted shadow-md mx-2 p-2">
       <h2 className="text-2xl px-2 pb-2">Doctor Notes</h2>
-      <div className="rounded p-2 bg-background">
-        {summary ? summary : "No summary generated yet."}
-      </div>
+        {generatingSummary ? <LoadingSummary /> : text}
     </div>
   )
 }
@@ -50,12 +63,6 @@ function TranscriptBox({transcript}) {
 }
 
 function Header({ isConnected }) {
-  function moreTranscript() {
-    socket.emit('send-transcript')
-  }
-  function resetTranscript() {
-    socket.emit('reset-transcript')
-  }
   return (
     <header className="sticky top-0 z-10 bg-background w-full flex flex-row p-4 items-center justify-between shadow-md">
       <div className="flex flex-row items-center space-x-4">
@@ -64,8 +71,7 @@ function Header({ isConnected }) {
         {/*<span className="block text-2l">{isConnected ? "Connected" : "Not Connected"}</span>*/}
       </div>
       <div className="flex flex-row items-center space-x-4">
-        {/*<Button onClick={resetTranscript}>Reset Transcript</Button>
-        <Button onClick={moreTranscript}>More Transcript</Button>*/}
+        <SendTranscript />
         <SendAudio />
       </div>
     </header>
@@ -96,7 +102,8 @@ function ErrorAlert({error, dismissError}) {
 }
 
 function App() {
-  const {isConnected, transcript, summary, error, setError } = useSocket()
+  const {isConnected, generatingSummary, transcript,
+    summary, error, setError } = useSocket()
   function handleDismiss() {
     setError(null)
   }
@@ -106,18 +113,23 @@ function App() {
       <Header isConnected={isConnected} />
       <main className="p-4 space-y-4">
         <ErrorAlert error={error} dismissError={handleDismiss} />
-        <div className="flex flex-row items-center space-x-4">
+        <div className="flex flex-col space-y-4 px-16">
           <p>
-            To use the microphone to record a live sentence, select microphone
-            from the dropdown menu after clicking Start Transcription. To use
+            To use the microphone to record a live sentence, click Start
+            Transcription and select microphone from the dropdown menu. To use
             a simulated, pre-recorded conversation from a dataset created by
             doctors, select a recording from the Prerecorded Interviews section
             of the dropdown menu.
           </p>
+          <p>
+            Alternatively, you can use an existing transcript of one of those
+            conversations. Click Existing Transcript to select a transcript
+            corresponding to one of the audio files.
+          </p>
         </div>
         <div className="flex flex-row items-start">
           <TranscriptBox transcript={transcript} />
-          <SummaryBox summary={summary} />
+          <SummaryBox summary={summary} generatingSummary={generatingSummary} />
         </div>
       </main>
     </>

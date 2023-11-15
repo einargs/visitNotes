@@ -55,7 +55,7 @@
       });
       # The actually built site.
       site-dist = pkgs.callPackage ./notes-site/site-dist.nix {};
-      transcript-file = ./data/clean_transcripts/CAR0001.txt;
+      transcript-dir = ./data/selected_transcripts;
 
       # Here we include all the dependencies that it needs
       visit-notes-for = script: pkgs.symlinkJoin {
@@ -127,7 +127,7 @@
         specialArgs = {
           visit-notes-site = site-dist;
           visit-notes-app = visit-notes-vm-app;
-          inherit transcript-file;
+          inherit transcript-dir;
         };
         modules = [
           nixos-generators.nixosModules.all-formats
@@ -187,7 +187,7 @@
       import ./vm/site-service.nix ({
         visit-notes-site = site-dist;
         visit-notes-app = visit-notes-vm-app;
-        inherit transcript-file;
+        inherit transcript-dir;
       } // args);
 
     packages.x86_64-linux = {

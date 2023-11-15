@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import { useAudio } from './socket.js'
+import { useAudio, sendExistingTranscript } from './socket.js'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,6 +60,47 @@ function AudioPicker() {
     <Button onClick={sourceSetter(null)}>Stop Transcription</Button>
   )
 
+}
+
+function TranscriptPicker() {
+  const transcripts = [
+    { name: "Cardiac", id: "CAR" },
+    { name: "Respiratory", id: "RES" },
+    { name: "General", id: "GEN" },
+    { name: "Misc", id: "MSK" },
+  ]
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button>Existing Transcript</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        {transcripts.map((src) =>
+          <DropdownMenuItem key={src.id}
+              onSelect={() => sendExistingTranscript(src.id)}>
+            {src.name}
+          </DropdownMenuItem>)
+        }
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+export function SendTranscript() {
+  return (
+    <TooltipProvider delayDuration="500">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>
+          <TranscriptPicker />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Choose existing transcript to generate notes for</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
 }
 
 export function SendAudio() {

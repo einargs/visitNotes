@@ -8,6 +8,10 @@ import RecordRTC from 'recordrtc'
 // working again.
 export const socket = io();
 
+export function sendExistingTranscript(transcriptId) {
+  socket.emit('use-transcript', transcriptId)
+}
+
 export function useAudio() {
   const [recordingSource, setRecordingSource] = useState(null)
   useEffect(() => {
@@ -91,6 +95,7 @@ export function useSocket() {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [error, setError] = useState(null)
   const [summary, setSummary] = useState("")
+  const [generatingSummary, setGeneratingSummary] = useState(false)
   const [transcript, setTranscript] = useState([])
 
   useEffect(() => {
@@ -109,7 +114,12 @@ export function useSocket() {
     }
 
     function onNewSummary(summary) {
+      setGeneratingSummary(false)
       setSummary(summary)
+    }
+
+    function onStartingSummary() {
+      setGeneratingSummary(true)
     }
 
     function onError(err, display) {
@@ -123,6 +133,7 @@ export function useSocket() {
     socket.on('disconnect', onDisconnect);
     socket.on('transcript-update', onTranscriptUpdate)
     socket.on('new-summary', onNewSummary)
+    socket.on('starting-summary', onStartingSummary)
     socket.on('error', onError)
 
     return () => {
@@ -131,7 +142,9 @@ export function useSocket() {
       socket.off('transcript-update', onTranscriptUpdate)
       socket.off('error', onError)
       socket.off('new-summary', onNewSummary)
+      socket.off('starting-summary', onStartingSummary)
+    socket.on('error', onError)
     };
   }, []);
-  return { isConnected, summary, transcript, error, setError }
+  return { isConnected, generatingSummary, summary, transcript, error, setError }
 }

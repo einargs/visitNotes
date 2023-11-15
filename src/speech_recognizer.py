@@ -9,7 +9,7 @@ from socket_server import sio, send_error
 async def send_notes(sid, transcript):
   """Create notes from the transcript and send them to the website."""
   print("STARTING SEND NOTES")
-  # notes = "NOTES" # TODO: Change back!
+  await sio.emit('starting-summary', to=sid)
   notes = await create_transcript_notes(transcript)
   print("GOT NOTES")
   await sio.emit('new-summary', to=sid, data=notes)

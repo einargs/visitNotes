@@ -1,4 +1,4 @@
-{ config, pkgs, lib, visit-notes-site, visit-notes-app, transcript-file, ... }:
+{ config, pkgs, lib, visit-notes-site, visit-notes-app, transcript-dir, ... }:
 
 let cfg = config.services.visit-notes-backend; in
 with lib;
@@ -27,7 +27,7 @@ with lib;
         ENV_FILE = "/var/lib/visit-notes-backend/env-file";
         PORT = builtins.toString cfg.port;
         # SPEECH_LOG_FILE = "/var/lib/site-backend/speech-log.txt";
-        TRANSCRIPT = "${transcript-file}";
+        TRANSCRIPT_DIR = "${transcript-dir}";
         STATIC_FILES = "${visit-notes-site}";
       };
       serviceConfig = {

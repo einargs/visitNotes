@@ -88,6 +88,39 @@ async def handle_audio_end(sid):
     finally:
       cleanup_recording_session(session)
 
+async def get_transcript_text(transcript_name):
+  transcript_dir = os.environ.get("TRANSCRIPT_DIR", "./data/selected_transcripts")
+  if transcript_name not in ['CAR', 'GEN', 'MSK', 'RES']:
+    raise Exception("unknown transcript id")
+  path = pathlib.Path(transcript_dir) / (transcript_name + "0001.txt")
+  async with aiofiles.open(path, mode='r') as f:
+    transcript = []
+    async for line in f:
+      if line.strip() == '':
+        continue
+      speaker = line[:3]
+      if speaker == "D: ":
+        msg = line[3:].strip()
+        transcript.append({
+          'speaker': "Guest-1",
+          'text': msg
+        })
+      elif speaker == "P: ":
+        msg = line[3:].strip()
+        transcript.append({
+          'speaker': "Guest-1",
+          'text': msg
+        })
+      else:
+        transcript[-1]['text'] += " " + line
+    return transcript
+
+@sio.on('use-transcript')
+async def handle_use_transcript(sid, transcript_name):
+  transcript = await get_transcript_text(transcript_name)
+  await sio.emit('transcript-update', to=sid, data=transcript)
+  await speech.send_notes(sid, transcript)
+
 # Quick hack to let us serve the static files if an environment variable with
 # them is set. Used for letting us serve the static files from a docker
 # container.
@@ -103,3 +136,9 @@ asgi = socketio.ASGIApp(
   static_files=static_files
   # other_asgi_app=app
 )
+
+if __name__ == "__main__":
+  async def main():
+    transcripts = await get_transcript_text("GEN")
+    print(transcripts)
+  asyncio.run(main())
